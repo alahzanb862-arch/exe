@@ -1,0 +1,43 @@
+name: Build CallAI Debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "**" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Prepare environment file
+        run: |
+          if [ -f ".env.example" ] && [ ! -f ".env" ]; then
+            cp .env.example .env
+          fi
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+
+      - name: Print Actual APK SHA-1
+        run: |
+          keytool -printcert -jarfile app/build/outputs/apk/debug/app-debug.apk | grep -i "SHA1:"
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: callai-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          
